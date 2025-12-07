@@ -48,7 +48,6 @@ func CastTo(spell Spell, object interface{}) {
 	field := obj.FieldByName(ch)
 	if field.IsValid() {
 		if field.CanSet() {
-			field.Int()
 			field.SetInt(field.Int() + val)
 		}
 	}

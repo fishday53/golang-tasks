@@ -1,5 +1,10 @@
 package reflect_spell
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type Spell interface {
 	// название заклинания
 	Name() string
@@ -21,7 +26,32 @@ func CastToAll(spell Spell, objects []interface{}) {
 }
 
 func CastTo(spell Spell, object interface{}) {
-	// реализуйте эту функцию.
+	ch := spell.Char()
+	val := int64(spell.Value())
+	obj := reflect.ValueOf(object)
+
+	switch obj.Kind() {
+	case reflect.Ptr:
+		if obj.Elem().Kind() != reflect.Struct {
+			fmt.Printf("Pointer to %v : %v", obj.Elem().Type(), obj.Elem())
+			return
+		}
+		// если всё-таки это указатель на структуру, дальше будем работать с самой структурой
+		obj = obj.Elem()
+
+	case reflect.Struct: // работаем со структурой
+	default:
+		fmt.Printf("%v : %v", obj.Type(), obj)
+		return
+	}
+
+	field := obj.FieldByName(ch)
+	if field.IsValid() {
+		if field.CanSet() {
+			field.Int()
+			field.SetInt(field.Int() + val)
+		}
+	}
 }
 
 type spell struct {
@@ -72,4 +102,28 @@ type Orc struct {
 
 type Wall struct {
 	Durability int
+}
+
+// Function for Task #2:
+func ReflectSpell() {
+	player := &Player{
+		name:   "Player_1",
+		health: 100,
+	}
+
+	enemies := []interface{}{
+		&Zombie{Health: 1000},
+		&Zombie{Health: 1000},
+		&Orc{Health: 500},
+		&Orc{Health: 500},
+		&Orc{Health: 500},
+		&Daemon{Health: 1000},
+		&Daemon{Health: 1000},
+		&Wall{Durability: 100},
+	}
+
+	CastToAll(newSpell("fire", "Health", -50), append(enemies, player))
+	CastToAll(newSpell("heal", "Health", 190), append(enemies, player))
+
+	fmt.Println(player)
 }
